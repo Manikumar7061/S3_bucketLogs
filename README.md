@@ -21,12 +21,12 @@ s3cmd credintials should be configured
    
 #### STEP3:
    -> Types of servers will be displayed. Enter the number you desired.(1 0r 2) If you wanted to continue without entering number, 
-      the default pilot will be considered.
+      the default pilot will be considered._
    -> Types of logs will be displayed. Enter the number you desired.(1, 2, 3, 4) If you wanted to continue without entering number, 
-      the default services will be considered.
-   -> choosing of date will be displayed. Enter the negative number you desired.(-1, indicates yesterday logs.-2, indicates day before yesterday logs) upto       before 7days. If you wanted to continue without entering number default today's date will be considered.
+      the default services will be considered._
+   -> choosing of date will be displayed. Enter the negative number you desired.(-1, indicates yesterday logs.-2, indicates day before yesterday logs) upto       before 7days. If you wanted to continue without entering number default today's date will be considered._
    -> File choosing will be displayed. Enter the number you desired.(1, 2) If you wanted to continue without entering number, 
-      all the existing files will be downloaded.
+      all the existing files will be downloaded._
       
    >The Requested Files will be opened to view.
    
