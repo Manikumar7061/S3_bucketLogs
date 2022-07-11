@@ -62,8 +62,8 @@ echo $url
 
 #storing the downloaded logs
 storageDir="searchassist-logs/${server}/${logType}/${reqDate}"
-mkdir -p serverLogs/
-cd serverLogs
+mkdir -p .serverLogs/
+cd .serverLogs
 
 arr=($(s3cmd ls ${url}))
 
