@@ -3,10 +3,7 @@ import os
 import fileinput
 import re
 from time import strptime
-# for roots,dirs,files in os.walk(os.getcwdb()):
-#                 print(roots,len(dirs),len(files))
 
-# a=os.getcwdb()
 def logSorter(l,t_fmt,t_fmt2,t_fmt3):
     key=""
     try:
@@ -28,7 +25,6 @@ def logSorter(l,t_fmt,t_fmt2,t_fmt3):
 def sortingAppending(file):
     
     lines = open(file,"r+")
-    writeSortedLogs = open("sortedLogsFile.log","w+")
 
     t_fmt = "%Y-%m-%dT%H:%M:%S.%fZ" # format of time stamps
     t_fmt2 = "%a, %d %b %Y %H:%M:%S"
@@ -42,19 +38,17 @@ def sortingAppending(file):
                 res = ' '.join([temp_list[-1],l])
                 temp_list.pop()
                 temp_list.append(res)
-
+        lines.truncate(0);
+        lines.seek(0);
         for l in sorted(temp_list, key=lambda line: logSorter(line,t_fmt,t_fmt2,t_fmt3)):
-            writeSortedLogs.write(l)
+            lines.write(l)
     except:
         print("no date patterns in it")
         return
  
 
 
-print("directory  ---> "+ os.getcwdb().decode("utf8"))
-
-
-os.chdir(os.getcwdb().decode("utf8")+"/serverLogs")
+os.chdir(os.getcwdb().decode("utf8")+"/.serverLogs")
 
 serverFiles = os.listdir();
 
@@ -81,20 +75,10 @@ for j in range(len(serverFiles_1)):
     cmd = "cat "+serverLogsDirectoryPath+"/logFiles_1/"+serverFiles_1[j]+" "+serverLogsDirectoryPath+"/logFiles_3/"+serverFiles_1[j]+" >finalServerLogs/" +serverFiles_1[j]
     subprocess.call(cmd, shell=True)
     
-
-    # lines = fileinput.input("finalServerLogs/"+serverFiles_1[j])
-    # t_fmt = '%a %b %d %H:%M:%S %Y' # format of time stamps
-    # t_pat = re.compile(r'\[(.+?)\]') # pattern to extract timestamp
-    # for l in sorted(lines, key=lambda l: strptime(t_pat.search(l).group(1), t_fmt)):
-    #     print(l)
     
     sortingAppending("finalServerLogs/"+serverFiles_1[j])
     cmd2 = "gedit finalServerLogs/"+serverFiles_1[j]+" &"
     subprocess.call(cmd2, shell=True)
 
-cmd3 = "rm -r serverLogs"
+cmd3 = "rm -r .serverLogs"
 subprocess.call(cmd3, shell=True)
-
-# cmd = "s3cmd ls s3://searchassist-logs/searchassist-pilotlogs/services/2022/30-Jun-2022/172.31.16.96/"
-# subprocess.call(cmd, shell=True)
-# print(cmd)
