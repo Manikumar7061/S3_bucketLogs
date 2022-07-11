@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+
+echo -e "ENTER SERVER \n 1. pilot   2. prod"
+read serverType
+
+case $serverType in
+1) server="pilot" ;;
+2) server="prod" ;;
+*)
+	echo "This server is not available. taking default pilot-server"
+	server="pilot"
+	;;
+esac
+
+echo -e "ENTER LOG-TYPE \n 1.Search    2.elastic     3.rabbitmq     4.services"
+read logTypeSelector
+case $logTypeSelector in
+1) logType="Search" ;;
+2) logType="elastic" ;;
+3) logType="rabbitmq" ;;
+4) logType="services" ;;
+*)
+	echo "This server is not available. taking default services"
+	logType="services"
+	;;
+esac
+
+echo -e "ENTER THE DESIRED DATE \n ------------------------------- \nFormat - (DD-Mon-YYYY) 30-Jun-2022 \n Please enter 8days before dates only\n If required current status -> Just Enter "now" \n-------------------------------"
+read reqDate
+if [[ $reqDate == "now" || -z $reqDate ]]; then
+	reqDate=$(date "+%d-%b-%Y")
+	echo $reqDate
+	reqTime=$(date "+%H:%M")
+else
+	case $reqDate in
+	-1) reqDate=$(date "+%d-%b-%Y" -d "-1 days") ;;
+	-2) reqDate=$(date "+%d-%b-%Y" -d "-2 days") ;;
+	-3) reqDate=$(date "+%d-%b-%Y" -d "-3 days") ;;
+	-4) reqDate=$(date "+%d-%b-%Y" -d "-4 days") ;;
+	-5) reqDate=$(date "+%d-%b-%Y" -d "-5 days") ;;
+	-6) reqDate=$(date "+%d-%b-%Y" -d "-6 days") ;;
+	-7) reqDate=$(date "+%d-%b-%Y" -d "-7 days") ;;
+	*)
+		echo "This server is not available. taking default services"
+		reqDate=${reqDate}
+		;;
+esac
+fi
+
+
+# availDates=($(s3cmd ls ${url}))
+
+# echo "${availDates[@]}_hi"
+# for date in "${!availDates[@]}"; do
+# 	if [[ ${#availDates[$date]} > 4 ]]; then
+# 	echo  " $(( (${date} / 2) + 1)) . ${availDates[date]}  "
+# 	fi
+# done
+
+url="s3://searchassist-logs/searchassist-${server}logs/${logType}/2022/${reqDate}/"
+echo $url
+
+#storing the downloaded logs
+storageDir="searchassist-logs/${server}/${logType}/${reqDate}"
+mkdir -p serverLogs/
+cd serverLogs
+
+arr=($(s3cmd ls ${url}))
+
+echo serverrr-${arr[1]}
+filesList=($(s3cmd ls ${arr[1]}))
+
+declare -a logFileArray
+
+echo -e "FOR ALL FILE LOGS -> PRESS "ENTER" \n FOR SPECIFIC FILE LOG -> ENTER THE FILE NAME:"
+#for displaying the name of the file
+for item in "${!filesList[@]}"; do
+if [[ ${filesList[item]} == *".log"* && ${filesList[item]} != *".log."* ]]; then
+logFileArray+=(${filesList[item]##*/})
+echo $(( ${item} / 3 ))". ${filesList[item]##*/}"
+fi
+done
+
+for logFile in ${!logFileArray[@]}; do
+echo $(( $logFile + 1)). ${logFileArray[$logFile]}
+done
+read reqFile
+
+for item in "${!arr[@]}"; do
+	if [[ ${#arr[$item]} > 4 ]]; then
+		mkdir logFiles_${item}
+		mkdir -p ~/${storageDir}/Server_$(( (${item} / 2) + 1))
+		cd logFiles_${item}
+		echo $item
+		serFiles=($(s3cmd ls ${arr[${item}]})) #2-servers url
+		echo ${serFiles[@]}
+		#for loop for iterating servers for logs
+		for file in "${serFiles[@]}"; do
+			if [ -z $reqFile ]; then
+				if [[ ${file,,} != *".log."* && ${file,,} == *".log"* ]]; then
+					echo "${file}"
+					s3cmd get ${file}
+				fi
+			elif [[ ${file} == ${arr[$item]}${logFileArray[ $(( ${reqFile} - 1 ))]} ]]; then
+				echo "$file  ------ $arr[$item]${logFileArray[${reqFile}]}"
+				s3cmd get ${file}
+			fi
+		done
+		#for loop ends
+		
+		filesDownloaded=($(ls))
+		for downloadedfile in ${filesDownloaded[@]}; do
+			cat ${downloadedfile}> ~/${storageDir}/Server_$(( (${item} / 2) + 1 ))/${downloadedfile}
+		done
+
+		#downloaded log files
+		#downloadedLogFiles=($(ls))
+		# for logFile in "${downloadedLogFiles[@]}"; do
+		# 	echo ${logFile}
+		# 	echo -e "\n ${logFile} \n" >>../server_$(((${item} / 2) + 1))_${logType}_${reqFile}_${reqTime}.log
+
+		# 	#setDate=$(date "+%Y-%m-%d %H:%M" -d "${reqDate} ${reqTime} 15 minutes ago")
+
+		# 	if [[ ${logFile,,} == *"findly"* ]]
+		# 	then
+		# 	tail -100 ${logFile} >>../server_$(((${item} / 2) + 1))_${logType}_${reqFile}_${reqTime}.log
+		# 	else
+		# 	for i in {0..30}; do
+		# 		grep "$(date +"%Y-%m-%d %H:%M" --date="${setDate} ${i} minutes")\|($tail -100)" ${logFile} >>../server_$(((${item} / 2) + 1))_${logType}_${reqFile}_${reqTime}.log
+		# 		#echo "$(date +"%Y-%m-%d %H:%M" --date="${setDate} ${i} minutes")"
+		# 	done
+		# 	fi
+		# 	#cat ${logFile} >>../server_${item}.log
+		# done
+		# end of downloding log files
+
+		cd ..
+	fi
+done
+
+cd ..
+
+python3 logsAppender.py
+
+
+#s3cmd get s3://searchassist-logs/searchassist-pilotlogs/Search/2022/30-Jun-2022/172.31.22.188/Findly.log
